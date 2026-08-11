@@ -5,6 +5,7 @@ Smart Client & Kheti Tracker Bot (PDF Support)
 
 import os
 import re
+import json
 import logging
 import threading
 import asyncio
@@ -38,7 +39,10 @@ def run_dummy_server():
 # ---------------------------------------------------------------------------
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "PUT_YOUR_TELEGRAM_BOT_TOKEN_HERE")
 SHEET_NAME = "Smart_Tracker_DB"
-CREDENTIALS_FILE = "service_account.json"
+
+# Render env variable jisme service account ka poora JSON content paste kiya gaya hai.
+# Naam bilkul "service_account.json" hi rakha gaya hai (Render dashboard mein jo daala hai).
+CREDENTIALS_ENV_VAR = "service_account.json"
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -54,7 +58,24 @@ def get_sheets_client():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
-    creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=scopes)
+
+    raw_creds = os.environ.get(CREDENTIALS_ENV_VAR)
+    if not raw_creds:
+        raise RuntimeError(
+            f"Environment variable '{CREDENTIALS_ENV_VAR}' नहीं मिला। "
+            "Render dashboard → Environment में यह variable चेक करें।"
+        )
+
+    try:
+        creds_info = json.loads(raw_creds)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(
+            f"'{CREDENTIALS_ENV_VAR}' में valid JSON नहीं है। "
+            "Render में पूरी service_account.json फाइल का content copy-paste किया गया है या नहीं, चेक करें. "
+            f"Detail: {e}"
+        )
+
+    creds = Credentials.from_service_account_info(creds_info, scopes=scopes)
     return gspread.authorize(creds)
 
 def parse_entry(args: list[str]):
@@ -106,7 +127,7 @@ async def setup_sheet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         
         await status_msg.edit_text(f"✅ *डेटाबेस तैयार है!*\n🔗 [यहाँ देखें]({spreadsheet.url})", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
     except Exception as e:
-        await status_msg.edit_text(f"❌ गड़बड़ हुई: {e}")
+        await status_msg.edit_text(f"❌ गड़बड़ हुई: {e}")
 
 async def new_client(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not context.args:
@@ -153,7 +174,7 @@ async def add_entry(update: Update, context: ContextTypes.DEFAULT_TYPE, entry_ty
             parse_mode=ParseMode.MARKDOWN
         )
     except Exception as e:
-        await status_msg.edit_text(f"❌ गड़बड़ हुई: {e}")
+        await status_msg.edit_text(f"❌ गड़बड़ हुई: {e}")
 
 async def khet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await add_entry(update, context, "Kheti")
@@ -280,4 +301,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
