@@ -235,7 +235,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         pdf.ln(5)
         pdf.set_font("Helvetica", style="B", size=12)
         pdf.cell(190, 10, txt=f"Total Kheti Expense: Rs {total_khet}", ln=True)
-        pdf.cell(190, 10, txt=f"Total Bainama Income: Rs {total_bainama}", ln=True)
+        pdf.cell(190, 10, txt=f"income: Rs {total_bainama}", ln=True)
         
         # Save temp file
         filename = "temp_report.pdf"
