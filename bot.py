@@ -37,7 +37,7 @@ def run_dummy_server():
 # ---------------------------------------------------------------------------
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "PUT_YOUR_TELEGRAM_BOT_TOKEN_HERE")
 
-# Photo se nikala gaya Apps Script URL aur apka secret token
+# Aapka diya hua URL aur secret token
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-bSpCSzTf_IYbPGSzxfEGbE4uvegWNZUxwL9eKpDaSFkfKQo0GfwPJoeFT_sQuLSW8w/exec"
 SECRET_TOKEN = "apna_koi_bhi_secret_yahan_daalein_123"
 
@@ -56,8 +56,15 @@ USER_STATE = {}
 def call_google_script(payload: dict) -> dict:
     """Google Apps Script को डेटा भेजने और मँगाने का फंक्शन"""
     payload["token"] = SECRET_TOKEN
+    
+    # 403 Forbidden Fix: Google को लगेगा कि यह रिक्वेस्ट Google Chrome ब्राउज़र से आ रही है
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Content-Type": "application/json"
+    }
+    
     try:
-        response = requests.post(APPS_SCRIPT_URL, json=payload, timeout=20)
+        response = requests.post(APPS_SCRIPT_URL, json=payload, headers=headers, allow_redirects=True, timeout=20)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -80,7 +87,7 @@ def parse_entry(args: list[str]):
 # ---------------------------------------------------------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
-        "🌾 *स्मार्ट खाता एवं PDF ट्रैकर (Apps Script)* ⚖️\n\n"
+        "🌾 *स्मार्ट खाता एवं PDF ट्रैकर* ⚖️\n\n"
         "1️⃣ *सबसे पहले डेटाबेस चेक करें:*\n"
         "`/setup`\n\n"
         "2️⃣ *नया खाता/मुवक्किल शुरू करें:*\n"
@@ -274,4 +281,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
